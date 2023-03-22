@@ -48,14 +48,14 @@ export async function main(config: ApplicationConfig = {}, publicKey?: string) {
 
   const url = app.restServer.url;
   if (config.rest == null) {
-    console.log(`Hello action is running at ${url}`);
+    console.log(`Dev action is running at ${url}`);
   }
   return {app, signingKey};
 }
 
 if (require.main === module) {
   main().catch(err => {
-    console.error('Fail to start the HelloWorld action: %O', err);
+    console.error('Fail to start the dev action: %O', err);
     process.exit(1);
   });
 }

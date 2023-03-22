@@ -1,7 +1,7 @@
 {
-  "name": "@collabland/example-hello-action",
+  "name": "@collabland/example-dev-action",
   "version": "0.0.1",
-  "description": "CollabLand Hello action",
+  "description": "CollabLand Dev action",
   "keywords": [
     "CollabLand",
     "Collab.Land",
@@ -18,17 +18,14 @@
     "prettier:cli": "lb-prettier \"**/*.ts\" \"**/*.md\"",
     "prettier:check": "npm run prettier:cli -- -l",
     "prettier:fix": "npm run prettier:cli -- --write",
-    "pretest": "npm run build",
-    "test": "lb-mocha --allow-console-logs \"dist/__tests__\"",
     "rebuild": "npm run clean && npm run build",
     "clean": "lb-clean dist *.tsbuildinfo .eslintcache",
     "start": "npm run rebuild && node dist/server",
-    "server": "node dist/server",
-    "client": "node dist/client"
+    "server": "node dist/server bc9b6e5b99a10481e47aad74dbfdadb125e3c50a642ed2546b3602e43373c93a"
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:abridged/collabland-hello-action.git"
+    "url": "git@github.com:abridged/collabland-dev-action.git"
   },
   "publishConfig": {
     "access": "public"

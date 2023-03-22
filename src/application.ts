@@ -7,7 +7,7 @@ import {getEnvVar, getEnvVarAsNumber} from '@collabland/common';
 import {ApplicationConfig} from '@loopback/core';
 import {RestApplication} from '@loopback/rest';
 import path from 'path';
-import {HelloActionComponent} from './component.js';
+import {DevActionComponent} from './component.js';
 
 /**
  * A demo application to expose REST APIs for Hello action
@@ -15,7 +15,7 @@ import {HelloActionComponent} from './component.js';
 export class HelloActionApplication extends RestApplication {
   constructor(config?: ApplicationConfig) {
     super(HelloActionApplication.resolveConfig(config));
-    this.component(HelloActionComponent);
+    this.component(DevActionComponent);
     this.static('/', path.join(__dirname, '../public'));
   }
 
