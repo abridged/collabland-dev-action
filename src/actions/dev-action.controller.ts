@@ -3,9 +3,8 @@
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
 
-import {stringify} from '@collabland/common';
+import {HttpErrors, stringify} from '@collabland/common';
 import {
-  APIChatInputApplicationCommandInteraction,
   APIInteractionResponse,
   ApplicationCommandOptionType,
   ApplicationCommandSpec,
@@ -20,9 +19,10 @@ import {
 } from '@collabland/discord';
 import {MiniAppManifest} from '@collabland/models';
 import {BindingScope, injectable} from '@loopback/core';
-import {api} from '@loopback/rest';
+import {api, get, param} from '@loopback/rest';
 import {
   ActionRowBuilder,
+  APIInteraction,
   ButtonBuilder,
   ButtonStyle,
   EmbedBuilder,
@@ -41,7 +41,34 @@ import {
   scope: BindingScope.SINGLETON,
 })
 @api({basePath: '/dev-action'}) // Set the base path to `/dev-action`
-export class DevActionController extends BaseDiscordActionController<APIChatInputApplicationCommandInteraction> {
+export class DevActionController extends BaseDiscordActionController {
+  private interactions: {
+    request: DiscordActionRequest<APIInteraction>;
+    response: APIInteractionResponse;
+    timestamp: number;
+  }[] = [];
+
+  @get('/interactions/{id}')
+  async getInteraction(@param.path.string('id') interactionId: string) {
+    const interactions = [];
+    let interaction = undefined;
+    for (const i of this.interactions) {
+      if (i.request.id === interactionId) {
+        interaction = i;
+      }
+      if (i.timestamp + 900 * 1000 <= Date.now()) {
+        interactions.push(i);
+      }
+    }
+    this.interactions = interactions;
+    if (interaction == null) {
+      throw new HttpErrors.NotFound(
+        `Interaction ${interactionId} does not exist`,
+      );
+    }
+    return interaction;
+  }
+
   /**
    * Expose metadata for the action
    * @returns
@@ -82,11 +109,8 @@ export class DevActionController extends BaseDiscordActionController<APIChatInpu
    * @returns - Discord interaction response
    */
   protected async handle(
-    interaction: DiscordActionRequest<APIChatInputApplicationCommandInteraction>,
+    interaction: DiscordActionRequest<APIInteraction>,
   ): Promise<DiscordActionResponse> {
-    /**
-     * Build a simple Discord message private to the user
-     */
     const response: APIInteractionResponse = {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
@@ -110,6 +134,16 @@ export class DevActionController extends BaseDiscordActionController<APIChatInpu
             .toJSON(),
         ],
         components: [
+          new ActionRowBuilder<MessageActionRowComponentBuilder>()
+            .addComponents([
+              new ButtonBuilder()
+                .setLabel('Full request/response JSON for this interaction')
+                .setURL(
+                  `http://localhost:3000/dev-action/interactions/${interaction.id}`,
+                )
+                .setStyle(ButtonStyle.Link),
+            ])
+            .toJSON(),
           new ActionRowBuilder<MessageActionRowComponentBuilder>()
             .addComponents([
               new ButtonBuilder()
@@ -147,8 +181,11 @@ export class DevActionController extends BaseDiscordActionController<APIChatInpu
         ],
       },
     };
-
-    // Return the 1st response to Discord
+    this.interactions.push({
+      request: interaction,
+      response,
+      timestamp: Date.now(),
+    });
     return response;
   }
 
