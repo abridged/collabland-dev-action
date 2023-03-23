@@ -28,9 +28,14 @@ import {
   EmbedBuilder,
   MessageActionRowComponentBuilder,
   MessageFlags,
+  ModalActionRowComponentBuilder,
+  ModalBuilder,
   RoleSelectMenuBuilder,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+  UserSelectMenuBuilder,
 } from 'discord.js';
 
 /**
@@ -111,52 +116,72 @@ export class DevActionController extends BaseDiscordActionController {
   protected async handle(
     interaction: DiscordActionRequest<APIInteraction>,
   ): Promise<DiscordActionResponse> {
+    if (
+      interaction.type === InteractionType.MessageComponent &&
+      interaction.data.custom_id === 'dev:button:modal'
+    ) {
+      const data = new ModalBuilder()
+        .setTitle('Example modal')
+        .setCustomId('dev:modal:modal')
+        .addComponents(
+          new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+            new TextInputBuilder()
+              .setCustomId('dev:text:interaction')
+              .setLabel('Interaction')
+              .setStyle(TextInputStyle.Paragraph)
+              .setValue(this.describeInteraction(interaction)),
+            new TextInputBuilder()
+              .setCustomId('dev:text:interaction-data')
+              .setLabel('Interaction data')
+              .setStyle(TextInputStyle.Paragraph)
+              .setValue(this.renderInteractionData(interaction, false)),
+          ),
+        )
+        .toJSON();
+      return {
+        type: InteractionResponseType.Modal,
+        data,
+      };
+    }
     const response: APIInteractionResponse = {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
         flags: MessageFlags.Ephemeral,
         embeds: [
           new EmbedBuilder()
-            .setTitle('Interaction')
-            .setDescription(
-              `Interaction id: ${interaction.id}
-  Interaction type: ${interaction.type}            
-  Application id: ${interaction.application_id}
-  Guild id: ${interaction.guild_id}
-  Channel id: ${interaction.channel_id}
-  User: ${interaction.member?.user.id} ${interaction.member?.user.username}#${interaction.member?.user.discriminator}            
-            `,
-            )
+            .setTitle('embed: Interaction')
+            .setDescription(this.describeInteraction(interaction))
             .toJSON(),
           new EmbedBuilder()
-            .setTitle('Request data')
-            .setDescription('```json\n' + stringify(interaction.data) + '```')
+            .setTitle('embed: Request data')
+            .setDescription(this.renderInteractionData(interaction))
             .toJSON(),
         ],
         components: [
           new ActionRowBuilder<MessageActionRowComponentBuilder>()
             .addComponents([
               new ButtonBuilder()
-                .setLabel('Full request/response JSON for this interaction')
+                .setLabel('link: Request/response')
                 .setURL(
                   `http://localhost:3000/dev-action/interactions/${interaction.id}`,
                 )
                 .setStyle(ButtonStyle.Link),
-            ])
-            .toJSON(),
-          new ActionRowBuilder<MessageActionRowComponentBuilder>()
-            .addComponents([
               new ButtonBuilder()
-                .setLabel('Click me')
+                .setLabel('button: Click me')
                 .setCustomId('dev:button:click')
                 .setStyle(ButtonStyle.Success),
+              new ButtonBuilder()
+                .setLabel('button: Render a modal')
+                .setCustomId('dev:button:modal')
+                .setStyle(ButtonStyle.Primary),
             ])
             .toJSON(),
+
           new ActionRowBuilder<MessageActionRowComponentBuilder>()
             .addComponents(
               new StringSelectMenuBuilder()
                 .setCustomId('dev:select:string')
-                .setPlaceholder('Select a color')
+                .setPlaceholder('string-select-menu: Select a color')
                 .addOptions(
                   new StringSelectMenuOptionBuilder()
                     .setLabel('Red')
@@ -175,7 +200,20 @@ export class DevActionController extends BaseDiscordActionController {
             .addComponents(
               new RoleSelectMenuBuilder()
                 .setCustomId('dev:select:role')
-                .setPlaceholder('Select a role'),
+                .setPlaceholder('role-select-menu: Select a role'),
+            )
+            .toJSON(),
+
+          new ActionRowBuilder<MessageActionRowComponentBuilder>()
+            .addComponents(
+              new UserSelectMenuBuilder()
+                .setCustomId('dev:select:user')
+                .setPlaceholder('user-select-menu: Select a user'),
+              /*
+              new ChannelSelectMenuBuilder()
+                .setCustomId('dev:select:channel')
+                .setPlaceholder('channel-select-menu: Select a channel'),
+                */
             )
             .toJSON(),
         ],
@@ -187,6 +225,27 @@ export class DevActionController extends BaseDiscordActionController {
       timestamp: Date.now(),
     });
     return response;
+  }
+
+  private renderInteractionData(
+    interaction: DiscordActionRequest<APIInteraction>,
+    md = true,
+  ): string {
+    const data = stringify(interaction.data);
+    return md ? '```json\n' + data + '```' : data;
+  }
+
+  private describeInteraction(
+    interaction: DiscordActionRequest<APIInteraction>,
+  ): string {
+    return `Interaction id: ${interaction.id}
+Interaction type: ${interaction.type}            
+Application id: ${interaction.application_id}
+Guild id: ${interaction.guild_id}
+Channel id: ${interaction.channel_id}
+User id: ${interaction.member?.user.id}
+User name: ${interaction.member?.user.username}#${interaction.member?.user.discriminator}            
+`;
   }
 
   /**
