@@ -130,6 +130,8 @@ export class DevActionController extends BaseDiscordActionController {
               .setLabel('Interaction')
               .setStyle(TextInputStyle.Paragraph)
               .setValue(this.describeInteraction(interaction)),
+          ),
+          new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
             new TextInputBuilder()
               .setCustomId('dev:text:interaction-data')
               .setLabel('Interaction data')
