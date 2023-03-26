@@ -84,7 +84,7 @@ export class DevActionController extends BaseDiscordActionController {
        * Miniapp manifest
        */
       manifest: new MiniAppManifest({
-        appId: 'echo-action',
+        appId: 'dev-action',
         developer: 'collab.land',
         name: 'DevAction',
         platforms: ['discord'],
