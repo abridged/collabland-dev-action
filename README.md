@@ -1,5 +1,7 @@
 # @collabland/example-dev-action
 
+This is for testing purpose.
+
 This example illustrates how to implement a Collab action for Discord using
 different interaction types:
 
